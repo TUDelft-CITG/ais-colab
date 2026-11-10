@@ -46,7 +46,7 @@ def _canonicalize(x0, y0, x1, y1):
 
 def _render_geom(x0, y0, x1, y1, plot_width, plot_height, x_range, y_range, line_width=1):
     """Same as _render, but via a GeoDataFrame 'geometry' LineString column -- the
-    code path ais_shader's renderer.py actually uses -- instead of raw x/y columns.
+    code path ais_colab's renderer.py actually uses -- instead of raw x/y columns.
     Returns the xarray DataArray (not .values) so callers can crop by coordinate."""
     gdf = gpd.GeoDataFrame(geometry=[shapely.LineString([(x0, y0), (x1, y1)])])
     cvs = ds.Canvas(plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=y_range)

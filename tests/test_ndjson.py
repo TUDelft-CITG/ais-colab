@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
-from ais_shader.preprocessing import run_ndjson_conversion
+from ais_colab.preprocessing import run_ndjson_conversion
 
 def test_ndjson_conversion(tmp_path):
     # Create a small dummy NDJSON file

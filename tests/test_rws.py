@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from shapely.geometry import LineString, Point
 
-from ais_shader.rws import (
+from ais_colab.rws import (
     build_rws_fairway,
     fetch_rws_fairway_sections,
     fetch_rws_kilometer_markers,
@@ -161,7 +161,7 @@ def test_fetch_rws_lock_chambers_calls_query(monkeypatch):
             {"name": ["Westkolk"]}, geometry=[Point(4.4, 51.69)], crs=out_crs
         )
 
-    monkeypatch.setattr("ais_shader.rws.query_rws_arcgis_layer", mock_query)
+    monkeypatch.setattr("ais_colab.rws.query_rws_arcgis_layer", mock_query)
     gdf = fetch_rws_lock_chambers(bbox=(4.3, 51.6, 4.5, 51.8), out_crs="EPSG:28992")
     assert called["layer_id"] == 65
     assert called["bbox"] == (4.3, 51.6, 4.5, 51.8)

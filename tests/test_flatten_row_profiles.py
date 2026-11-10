@@ -1,4 +1,4 @@
-from ais_shader.preprocessing import flatten_row
+from ais_colab.preprocessing import flatten_row
 
 
 def test_flatten_row_flat_profile():

@@ -3,16 +3,16 @@
 ## 1. Accomplished Objectives
 
 ### A. Dutch Inland Waterways & RWS FIS Fairway Integration
-* **RWS FIS Fairway Axis (`src/ais_shader/rws.py`)**:
+* **RWS FIS Fairway Axis (`src/ais_colab/rws.py`)**:
   * Implemented automated ingestion of Rijkswaterstaat Fairway Information Services (FIS VNDS) from ArcGIS REST MapServer 58 (`vaarwegvak`), Layer 55 (`vaarwegen`), and Layer 11 (`kilometermarkering`).
   * Connects disjoint section geometries into a single continuous 1D Fairway Axis (`FairwayAxis`) in the Dutch national projection system (`EPSG:28992` - Amersfoort / RD New).
   * Auto-corrects line segment orientations to ensure monotonically ascending chainage coordinates along the waterway (`routekmbegin` to `routekmend`).
-  * Unit tests passing in [`tests/test_rws.py`](file:///home/fbaart/src/ais-shader/tests/test_rws.py).
-  * Added CLI command: `ais-shader fairway build-rws-centerline`.
+  * Unit tests passing in [`tests/test_rws.py`](file:///home/fbaart/src/ais-colab/tests/test_rws.py).
+  * Added CLI command: `ais-colab fairway build-rws-centerline`.
 
 ### B. EURIS AIS Ingestion & Crawl Pipeline
 * **Live Crawling & Pipeline Automation**:
-  * Implemented [`examples/crawl_euris_loop.py`](file:///home/fbaart/src/ais-shader/examples/crawl_euris_loop.py) and [`examples/detect_euris_encounters.py`](file:///home/fbaart/src/ais-shader/examples/detect_euris_encounters.py).
+  * Implemented [`examples/crawl_euris_loop.py`](file:///home/fbaart/src/ais-colab/examples/crawl_euris_loop.py) and [`examples/detect_euris_encounters.py`](file:///home/fbaart/src/ais-colab/examples/detect_euris_encounters.py).
   * Ran a 30-minute continuous crawl capturing 36,360 raw fixes across 208 vessels in the Netherlands.
   * Spatial corridor filtering isolates Amsterdam-Rijnkanaal (corridor width: 300 m lateral buffer).
 
@@ -28,14 +28,14 @@
   7. `encounters`: Detected CPA encounter events (overtakings, head-on meetings, crossings) with distance metrics and along-fairway chainage.
   8. `timeseries`: Synchronous dynamic connecting lines between interacting vessels at 15s intervals.
 * **Direct QGIS Style Embedding (`layer_styles`)**:
-  * [`scripts/generate_qgis_styles.py`](file:///home/fbaart/src/ais-shader/scripts/generate_qgis_styles.py) automatically embeds all QML layer styles into the SQLite `layer_styles` table inside the `.gpkg`.
+  * [`scripts/generate_qgis_styles.py`](file:///home/fbaart/src/ais-colab/scripts/generate_qgis_styles.py) automatically embeds all QML layer styles into the SQLite `layer_styles` table inside the `.gpkg`.
   * Opening the `.gpkg` in QGIS loads fully styled layers with instant symbology and temporal axes out of the box.
 
 ### D. Algorithmic Refinements & Kinematic Bug Fixes
 
 #### 1. Deduplication of Repeated Pings for Moving Vessels (Encounter #42)
 * **Root Cause**: High-frequency API polling (every 10s) on vessels broadcasting AIS Class A position reports every 20–30s generated consecutive identical coordinates. This created 0-meter segments (`speed_mps = 0.0`), which caused active vessels (e.g. `TRK_746020` sailing at 7.2 knots) to be flagged as stationary obstacles. As a result, head-on encounters were misclassified as `overtaking` (passing a moored vessel).
-* **Fix**: In [`make_segments_from_points`](file:///home/fbaart/src/ais-shader/examples/detect_euris_encounters.py), consecutive identical GPS fixes for moving vessels (`sog >= 0.5`) are deduplicated. In [`src/ais_shader/events.py`](file:///home/fbaart/src/ais-shader/src/ais_shader/events.py), an SOG fallback was added.
+* **Fix**: In [`make_segments_from_points`](file:///home/fbaart/src/ais-colab/examples/detect_euris_encounters.py), consecutive identical GPS fixes for moving vessels (`sog >= 0.5`) are deduplicated. In [`src/ais_colab/events.py`](file:///home/fbaart/src/ais-colab/src/ais_colab/events.py), an SOG fallback was added.
 * **Verification**: Encounter #42 between `TRK_746020` (342.5° heading, 7.2 kts) and `TRK_781453` (165.9° heading, 10.1 kts) is now accurately detected and classified as **`head-on`** at CPA 37.4 m.
 
 #### 2. Segments Visibility & Transparency Fix
@@ -96,7 +96,7 @@ uv run python scripts/generate_qgis_styles.py
 ## 3. Active Branches & Pull Requests
 
 * **Current Branch**: `feature/euris-encounters`
-* **Pull Request**: [#20 feat: Dutch inland encounter detection (EURIS + RWS FIS) with GeoPackage export](https://github.com/TUDelft-CITG/ais-shader/pull/20)
+* **Pull Request**: [#20 feat: Dutch inland encounter detection (EURIS + RWS FIS) with GeoPackage export](https://github.com/TUDelft-CITG/ais-colab/pull/20)
 * **Base Branch**: `main`
 * **Test Suite**: `99 passed, 4 xfailed, 0 failed`
 

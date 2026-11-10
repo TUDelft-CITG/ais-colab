@@ -9,7 +9,7 @@ import numpy as np
 import xarray as xr
 import pytest
 
-from ais_shader.postprocessing import aggregate_children, _matching_count_band
+from ais_colab.postprocessing import aggregate_children, _matching_count_band
 
 
 def test_matching_count_band_total():

@@ -26,9 +26,9 @@ import pandas as pd
 import numpy as np
 import shapely
 
-from ais_shader.moving_dask.trajectory import trajectorize_dataframe
-from ais_shader.events import detect_encounters, generate_encounter_timeseries
-from ais_shader.fairway import FairwayAxis
+from ais_colab.moving_dask.trajectory import trajectorize_dataframe
+from ais_colab.events import detect_encounters, generate_encounter_timeseries
+from ais_colab.fairway import FairwayAxis
 
 logging.basicConfig(
     level=logging.INFO,

@@ -13,7 +13,7 @@ import morecantile
 import shapely
 import xarray as xr
 
-from ais_shader.renderer import render_tile_task
+from ais_colab.renderer import render_tile_task
 
 
 def _diagonal_line_gdf():

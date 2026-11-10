@@ -49,7 +49,7 @@ STATUS_LABELS = {
 def parse_euris_feature(feat: dict, now_iso: str) -> Optional[dict]:
     """
     Parse a single GeoJSON Feature returned by the EURIS AIS WebSocket into
-    a normalized flat record matching ais-shader requirements.
+    a normalized flat record matching ais-colab requirements.
     """
     props = feat.get("properties", {})
     geom = feat.get("geometry", {})

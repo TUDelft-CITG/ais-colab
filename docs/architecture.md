@@ -83,7 +83,7 @@ Because of its high memory efficiency and scalability when processing multi-year
 
 ## File Formats & Data Schemas
 
-This section documents the file formats and schemas consumed and produced by the `ais-shader` pipeline.
+This section documents the file formats and schemas consumed and produced by the `ais-colab` pipeline.
 
 ### 1. Preprocessed GeoParquet
 - **Format**: Apache Parquet with spatial metadata compliant with the GeoParquet specification.

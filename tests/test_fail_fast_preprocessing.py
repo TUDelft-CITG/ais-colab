@@ -11,7 +11,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 
-from ais_shader.preprocessing import build_vessel_mapping, run_segment_generation
+from ais_colab.preprocessing import build_vessel_mapping, run_segment_generation
 
 
 def _write_json(tmp_path, data):

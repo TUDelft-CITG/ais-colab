@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 from shapely.geometry import LineString
-from ais_shader.analysis import process_partition
+from ais_colab.analysis import process_partition
 
 def test_passage_crossing():
     # 1. Create a synthetic passage line: horizontal line crossing longitude 0.0 at latitude 0.05

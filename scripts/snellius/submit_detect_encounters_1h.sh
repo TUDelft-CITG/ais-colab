@@ -58,7 +58,7 @@ uv run dask-worker "${SCHEDULER_URL}" \
 sleep 10
 
 echo "==> Running encounter detection for 1-hour time slice (2026-03-31 00:00:00 to 01:00:00 UTC)..."
-uv run ais-shader events encounters "$INPUT_SEGS" \
+uv run ais-colab events encounters "$INPUT_SEGS" \
     -o "$ENCOUNTERS_PARQUET" \
     --start-time "2026-03-31 00:00:00" \
     --end-time "2026-03-31 01:00:00" \

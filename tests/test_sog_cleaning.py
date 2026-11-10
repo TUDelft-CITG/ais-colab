@@ -1,5 +1,5 @@
 """
-Regression tests for clean_sog (src/ais_shader/preprocessing.py).
+Regression tests for clean_sog (src/ais_colab/preprocessing.py).
 
 Bug: a prior version thresholded any value >= 102.3 as invalid, assuming the
 column was already in knots. Applied to a column still in raw AIS units
@@ -13,7 +13,7 @@ import math
 import numpy as np
 import pytest
 
-from ais_shader.preprocessing import clean_sog, SOG_CAP_KNOTS
+from ais_colab.preprocessing import clean_sog, SOG_CAP_KNOTS
 
 
 def test_raw_units_rescales_legitimate_high_speed():

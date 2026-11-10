@@ -1,6 +1,6 @@
 import numpy as np
 from dask_geopandas.hilbert_distance import _encode
-from ais_shader.moving_dask.trajectory import encode_3d_hilbert_numpy
+from ais_colab.moving_dask.trajectory import encode_3d_hilbert_numpy
 
 def test_hilbert_numpy():
     p = 8

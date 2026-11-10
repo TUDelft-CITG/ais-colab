@@ -13,11 +13,11 @@ VESSEL_CODES="$REPO_DIR/resources/vessel_groups.json"
 echo "==> Generating track linestrings from trajectorized points..."
 if [ -f "$VESSEL_CODES" ]; then
     echo "Using vessel codes configuration: $VESSEL_CODES"
-    uv run ais-shader trajectory to-linestring "$DATA_DIR/trajectorized.parquet" \
+    uv run ais-colab trajectory to-linestring "$DATA_DIR/trajectorized.parquet" \
         -o "$DATA_DIR/trajectorized_lines.geoparquet" \
         --vessel-codes-json "$VESSEL_CODES"
 else
-    uv run ais-shader trajectory to-linestring "$DATA_DIR/trajectorized.parquet" \
+    uv run ais-colab trajectory to-linestring "$DATA_DIR/trajectorized.parquet" \
         -o "$DATA_DIR/trajectorized_lines.geoparquet"
 fi
 

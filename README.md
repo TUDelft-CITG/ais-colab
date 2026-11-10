@@ -123,7 +123,7 @@ All trajectory operations are consolidated under the `trajectory` command group:
 Segment raw AIS points into trips, detect vessel stops, and compute kinematic features (speed, acceleration, turn rate) on a Dask cluster using spatial or spatiotemporal partitioning:
 
 ```bash
-uv run ais-shader trajectory compute /path/to/processed.geoparquet \
+uv run ais-colab trajectory compute /path/to/processed.geoparquet \
     --partition-method spatiotemporal \
     --hilbert-p 16 \
     --n-partitions 128
@@ -143,7 +143,7 @@ Aggregate point pings from trajectorized points into LineString/MultiLineString 
 
 ```bash
 # Automatically saves output to /path/to/trajectorized-lines.geoparquet
-uv run ais-shader trajectory to-linestring /path/to/trajectorized.geoparquet
+uv run ais-colab trajectory to-linestring /path/to/trajectorized.geoparquet
 ```
 
 #### Generate Point-Pair Segments
@@ -151,7 +151,7 @@ Generate 2-point segment LineStrings connecting consecutive point pairs:
 
 ```bash
 # Automatically saves output to /path/to/trajectorized-segments.geoparquet
-uv run ais-shader trajectory to-segment /path/to/trajectorized.geoparquet
+uv run ais-colab trajectory to-segment /path/to/trajectorized.geoparquet
 ```
 
 ### 2. Configuration
@@ -192,19 +192,19 @@ Generate raw count data (Zarr) for the highest zoom level (e.g., Zoom 7). Zarr i
 
 ```bash
 # Use input file from config.toml
-uv run ais-shader render
+uv run ais-colab render
 
 # Override input file via CLI
-uv run ais-shader render --input-file /path/to/other_dataset.parquet
+uv run ais-colab render --input-file /path/to/other_dataset.parquet
 
 # Use a shared Dask scheduler (recommended for large datasets)
-uv run ais-shader render --scheduler tcp://127.0.0.1:8786
+uv run ais-colab render --scheduler tcp://127.0.0.1:8786
 
 # Resume an interrupted run
-uv run ais-shader render --resume-dir rendered/run_YYYYMMDD_HHMMSS
+uv run ais-colab render --resume-dir rendered/run_YYYYMMDD_HHMMSS
 
 # Regional Rendering (e.g., NYC Port at Zoom 10)
-uv run ais-shader render --bbox -74.05 40.65 -74.00 40.70 --zoom 10
+uv run ais-colab render --bbox -74.05 40.65 -74.00 40.70 --zoom 10
 ```
 
 This will output `.zarr` files to `rendered/run_YYYYMMDD_HHMMSS/zarr/`.
@@ -215,10 +215,10 @@ Process the raw Zarr files to generate seamless, transparent PNGs and lower zoom
 
 ```bash
 # Run post-processing on a specific run directory
-uv run ais-shader postprocess --run-dir rendered/run_YYYYMMDD_HHMMSS --base-zoom 7
+uv run ais-colab postprocess --run-dir rendered/run_YYYYMMDD_HHMMSS --base-zoom 7
 
 # Optional: Clean up intermediate Zarr files to save space
-uv run ais-shader postprocess --run-dir rendered/run_YYYYMMDD_HHMMSS --base-zoom 7 --clean-intermediate
+uv run ais-colab postprocess --run-dir rendered/run_YYYYMMDD_HHMMSS --base-zoom 7 --clean-intermediate
 ```
 
 This script will:

@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 from shapely.geometry import LineString, Polygon
-from ais_shader.events import (
+from ais_colab.events import (
     check_abaft_the_beam,
     detect_line_crossings,
     detect_polygon_entry_exit,
@@ -415,7 +415,7 @@ def test_detect_encounters_dask_client():
 
 
 def test_detect_encounters_exclude_stationary_modes():
-    from ais_shader.events import extract_stationary_vessels
+    from ais_colab.events import extract_stationary_vessels
 
     # 3 vessels:
     # A is stationary at (0.0, 50.0)
@@ -500,7 +500,7 @@ def test_encounter_roles_and_timeseries_attributes():
 
 def test_detect_encounters_overtaking_outside_fairway():
     from shapely.geometry import LineString
-    from ais_shader.fairway import FairwayAxis
+    from ais_colab.fairway import FairwayAxis
 
     # Fairway centerline far away (Mississippi River ~150km east)
     centerline = LineString([(-89.5, 29.0), (-89.5, 30.0)])

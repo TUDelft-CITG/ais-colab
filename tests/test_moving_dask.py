@@ -6,8 +6,8 @@ import dask.dataframe as dd
 from dask.distributed import Client
 import pytest
 
-from ais_shader.moving_dask.features import calculate_kinematic_features_pandas
-from ais_shader.moving_dask.trajectory import trajectorize_dataframe, _calculate_rolling_hull_area
+from ais_colab.moving_dask.features import calculate_kinematic_features_pandas
+from ais_colab.moving_dask.trajectory import trajectorize_dataframe, _calculate_rolling_hull_area
 
 def test_calculate_kinematic_features_pandas():
     # Construct a simple trajectory: straight line northward, 1 ping every 10 seconds
