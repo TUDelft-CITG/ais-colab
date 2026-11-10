@@ -4,7 +4,7 @@ import os
 import shutil
 import uuid
 
-STYLES_DIR = "/home/fbaart/src/ais-shader/docs/styles"
+STYLES_DIR = "/home/fbaart/src/ais-colab/docs/styles"
 DATA_DIR = "/scratch-shared/fbaart/data/mississippi_1h"
 
 def uid():
@@ -693,7 +693,7 @@ def embed_gpkg_layer_styles(gpkg_path: str, styles: dict):
         INSERT INTO layer_styles (
             f_table_catalog, f_table_schema, f_table_name, f_geometry_column,
             styleName, styleQML, styleSLD, useAsDefault, description, owner, ui
-        ) VALUES ('', '', ?, ?, 'default', ?, '', 1, 'Default QGIS styling with temporal controller configuration', 'ais-shader', '')
+        ) VALUES ('', '', ?, ?, 'default', ?, '', 1, 'Default QGIS styling with temporal controller configuration', 'ais-colab', '')
         """, (layer_name, geom_col, qml_content.strip()))
         print(f"  -> Embedded default style for layer: {layer_name}")
     conn.commit()

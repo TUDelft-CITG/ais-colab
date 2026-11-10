@@ -1,5 +1,5 @@
 from click.testing import CliRunner
-from ais_shader.cli import cli, _default_output_path
+from ais_colab.cli import cli, _default_output_path
 from pathlib import Path
 
 def test_default_output_path():

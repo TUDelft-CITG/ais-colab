@@ -12,7 +12,7 @@ import shapely
 import xarray as xr
 
 import datashader as ds
-from ais_shader.renderer import render_tile_task, _canonicalize_line_direction, TILE_BORDER_PX
+from ais_colab.renderer import render_tile_task, _canonicalize_line_direction, TILE_BORDER_PX
 
 TILE_SIZE = 128
 BORDER = TILE_BORDER_PX  # kept in sync with renderer.py's actual render border

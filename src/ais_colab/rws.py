@@ -89,7 +89,7 @@ def query_rws_arcgis_layer(
     req = urllib.request.Request(
         url,
         headers={
-            "User-Agent": "ais-shader/rws (https://github.com/TUDelft-CITG/ais-shader)"
+            "User-Agent": "ais-colab/rws (https://github.com/TUDelft-CITG/ais-colab)"
         },
     )
 

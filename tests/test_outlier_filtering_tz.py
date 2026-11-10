@@ -11,7 +11,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 
-from ais_shader.preprocessing import run_outlier_filtering, strip_tz_and_epoch_seconds
+from ais_colab.preprocessing import run_outlier_filtering, strip_tz_and_epoch_seconds
 
 
 def _make_points_gdf(tz):

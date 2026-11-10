@@ -40,13 +40,13 @@ process_month() {
     # --no-spatial-index: this is a small, regional single-area dataset, so
     # dask-geopandas spatial partitioning (useful for pruning partitions across
     # a country-scale extent) is pure overhead here.
-    uv run ais-shader preprocess \
+    uv run ais-colab preprocess \
         "$DATASET_DIR/year=$year/month=$month" \
         --output-file "$INTERMEDIATE_DIR/${tag}_preprocessed.geoparquet" \
         --no-spatial-index
 
     # Stage 2: Filter Speed/Position Outliers
-    uv run ais-shader trajectory filter-outliers \
+    uv run ais-colab trajectory filter-outliers \
         "$INTERMEDIATE_DIR/${tag}_preprocessed.geoparquet" \
         --config-file "$CONFIG_PATH" \
         --output-file "$INTERMEDIATE_DIR/${tag}_cleaned.geoparquet"
@@ -55,7 +55,7 @@ process_month() {
     # --exclude-moored: RWS river traffic includes many permanently moored
     # vessels whose GPS jitter (position noise while stationary) otherwise
     # gets split into thousands of spurious short trips.
-    uv run ais-shader trajectory compute \
+    uv run ais-colab trajectory compute \
         "$INTERMEDIATE_DIR/${tag}_cleaned.geoparquet" \
         --vessel-id-col "$VESSEL_ID_COL" \
         --time-col "$TIME_COL" \
@@ -68,18 +68,18 @@ process_month() {
     # --sog-knots: confirmed from RWS data (sog tops out at 102.3, in 0.1-knot
     # steps of real vessel speeds) that this feed is already in knots, not
     # raw AIS units needing /10.
-    uv run ais-shader trajectory to-segment \
+    uv run ais-colab trajectory to-segment \
         "$INTERMEDIATE_DIR/${tag}_trajectorized.geoparquet" \
         --output-file "$INTERMEDIATE_DIR/${tag}_segments.geoparquet" \
         --sog-knots
 
     # Stage 4b: Generate full trajectory LineStrings (one line per voyage)
-    uv run ais-shader trajectory to-linestring \
+    uv run ais-colab trajectory to-linestring \
         "$INTERMEDIATE_DIR/${tag}_trajectorized.geoparquet" \
         --output-file "$INTERMEDIATE_DIR/${tag}_lines.geoparquet"
 
     # Stage 5: Preprocess Segments
-    uv run ais-shader preprocess \
+    uv run ais-colab preprocess \
         "$INTERMEDIATE_DIR/${tag}_segments.geoparquet" \
         --output-file "$INTERMEDIATE_DIR/${tag}_segments_preprocessed.geoparquet" \
         --no-spatial-index
@@ -87,7 +87,7 @@ process_month() {
     # Stage 6: Render Multi-Band Tiles
     local render_run_dir="$MAPS_DIR/render_run_${tag}"
     rm -rf "$render_run_dir"
-    uv run ais-shader render \
+    uv run ais-colab render \
         --config-file "$CONFIG_PATH" \
         --input-file "$INTERMEDIATE_DIR/${tag}_segments_preprocessed.geoparquet" \
         --output-dir "$render_run_dir"
@@ -96,7 +96,7 @@ process_month() {
     actual_run_dir=$(ls -d "$render_run_dir"/run_* | head -1)
 
     # Stage 7: Postprocess Multi-Band Pyramid
-    uv run ais-shader postprocess \
+    uv run ais-colab postprocess \
         --config-file "$CONFIG_PATH" \
         --run-dir "$actual_run_dir" \
         --base-zoom "$ZOOM" \

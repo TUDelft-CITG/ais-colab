@@ -20,8 +20,8 @@
 To use the new "Fair Density" recommendation:
 ```bash
 # For visualization (default)
-ais-shader render ... --line-width 1
+ais-colab render ... --line-width 1
 
 # For analysis (integer counts)
-ais-shader render ... --line-width 0
+ais-colab render ... --line-width 0
 ```

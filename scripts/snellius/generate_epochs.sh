@@ -11,12 +11,12 @@ USER_NAME=${USER:-fbaart}
 DATA_DIR="/scratch-shared/${USER_NAME}/data/rws"
 
 # Generate epoch-normalized points
-uv run ais-shader trajectory compute "$DATA_DIR/processed.parquet" \
+uv run ais-colab trajectory compute "$DATA_DIR/processed.parquet" \
     -o "$DATA_DIR/trajectorized_epochs.geoparquet" \
     --epoch-time
 
 # Generate epoch-normalized segment-pairs
-uv run ais-shader trajectory to-segment "$DATA_DIR/trajectorized_epochs.geoparquet" \
+uv run ais-colab trajectory to-segment "$DATA_DIR/trajectorized_epochs.geoparquet" \
     -o "$DATA_DIR/trajectorized_segments_epochs.geoparquet" \
     --epoch-time
 

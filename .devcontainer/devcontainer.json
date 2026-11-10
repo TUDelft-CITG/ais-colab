@@ -1,5 +1,5 @@
 {
-  "name": "AIS Shader",
+  "name": "AIS Colab",
   "build": {
     "dockerfile": "Dockerfile"
   },

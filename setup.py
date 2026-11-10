@@ -40,8 +40,8 @@ if sys.platform == "darwin":
 
 ext_modules = [
     Pybind11Extension(
-        "ais_shader._cgal_hull",
-        ["src/ais_shader/_cgal_hull.cpp"],
+        "ais_colab._cgal_hull",
+        ["src/ais_colab/_cgal_hull.cpp"],
         libraries=["gmp", "mpfr"],
         include_dirs=include_dirs,
         library_dirs=library_dirs,

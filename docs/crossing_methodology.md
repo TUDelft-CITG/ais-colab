@@ -1,6 +1,6 @@
 # Passage Line Crossing & Interpolation Methodology
 
-This document details the mathematical and algorithmic approach used by `ais-shader` to calculate vessel crossing events along passage lines (gates).
+This document details the mathematical and algorithmic approach used by `ais-colab` to calculate vessel crossing events along passage lines (gates).
 
 ## 1. Trajectory Construction (Segment Vectors)
 Instead of snapping individual, raw AIS points directly to the nearest passage lines, the pipeline reconstructs continuous vessel movement. 

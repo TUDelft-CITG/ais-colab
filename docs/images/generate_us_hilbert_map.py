@@ -9,7 +9,7 @@ import sys
 
 # Import encode_3d_hilbert_numpy directly from the trajectory module
 sys.path.append(str(Path(__file__).resolve().parents[2] / 'src'))
-from ais_shader.moving_dask.trajectory import encode_3d_hilbert_numpy
+from ais_colab.moving_dask.trajectory import encode_3d_hilbert_numpy
 
 def generate_map(df, x_int, y_int, t_int, p, filename, title, seed):
     coords = np.column_stack((x_int, y_int, t_int))

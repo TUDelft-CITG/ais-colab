@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from shapely.geometry import LineString, Point
 
-from ais_shader.fairway import FairwayAxis, get_utm_crs_for_lon_lat
-from ais_shader.usace import build_usace_fairway
+from ais_colab.fairway import FairwayAxis, get_utm_crs_for_lon_lat
+from ais_colab.usace import build_usace_fairway
 
 
 def test_fairway_axis_mock():

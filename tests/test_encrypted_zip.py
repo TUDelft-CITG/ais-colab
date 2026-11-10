@@ -3,7 +3,7 @@ import json
 import geopandas as gpd
 import pyzipper
 
-from ais_shader.preprocessing import run_ndjson_conversion
+from ais_colab.preprocessing import run_ndjson_conversion
 
 
 def test_ndjson_conversion_from_encrypted_zip(tmp_path, monkeypatch):

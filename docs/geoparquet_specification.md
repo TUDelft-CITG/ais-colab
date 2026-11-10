@@ -1,6 +1,6 @@
-# GeoParquet Dataset Specification for `ais-shader`
+# GeoParquet Dataset Specification for `ais-colab`
 
-This document specifies the schema, column definitions, coordinate reference systems (CRS), and directory partitioning expected by the `ais-shader` processing and visualization pipeline.
+This document specifies the schema, column definitions, coordinate reference systems (CRS), and directory partitioning expected by the `ais-colab` processing and visualization pipeline.
 
 ---
 
@@ -8,7 +8,7 @@ This document specifies the schema, column definitions, coordinate reference sys
 
 | Aspect | Specification | Notes |
 |---|---|---|
-| **Geometry Column Name** | `geometry` (standard), `geom` (RWS/PostGIS), or `Shape` (US Marine Cadastre WKB) | `ais-shader` standardizes active geometry columns to `geometry`. |
+| **Geometry Column Name** | `geometry` (standard), `geom` (RWS/PostGIS), or `Shape` (US Marine Cadastre WKB) | `ais-colab` standardizes active geometry columns to `geometry`. |
 | **Geometry Type** | `Point(x, y)` for raw AIS pings; `LineString` for vessel trajectories; `LineString` (2-point) for segments | 2D coordinates without elevation (Z) or measure (M). |
 | **CRS for Trajectorization** | `EPSG:4326` (WGS84 in decimal degrees) | Required for local **Azimuthal Equidistant (AEQD)** projection centering on the first ping of each track to calculate metric distance, area, and speed. |
 | **CRS for Rendering & Tiles** | `EPSG:3857` (Web Mercator) | Standard coordinate system for web map tile pyramids (`{z}/{x}/{y}.png`) and Cloud Optimized GeoTIFFs (COG). |
@@ -17,7 +17,7 @@ This document specifies the schema, column definitions, coordinate reference sys
 
 ## 2. Column Schema & CLI Arguments
 
-`ais-shader` defines a default column name for each field, supports alternative column names that are automatically detected, and allows explicit overrides via CLI arguments across the pipeline.
+`ais-colab` defines a default column name for each field, supports alternative column names that are automatically detected, and allows explicit overrides via CLI arguments across the pipeline.
 
 ### 2.1 Essential Trajectory & Spatial Columns
 
@@ -61,7 +61,7 @@ data/
         └── ...
 ```
 
-* `detect_hive_partitioning()` in `ais_shader.data_loader` automatically discovers `year`, `month`, and `day` partitioning schemes and maps them to PyArrow dataset partition fields.
+* `detect_hive_partitioning()` in `ais_colab.data_loader` automatically discovers `year`, `month`, and `day` partitioning schemes and maps them to PyArrow dataset partition fields.
 * Slicing by partition avoids scanning irrelevant time windows (predicate pushdown).
 
 ### 3.2 GeoParquet Metadata
@@ -76,7 +76,7 @@ Files must follow the [GeoParquet 1.0 or 1.1 Specification](https://geoparquet.o
 
 ## 4. Pipeline Stages & File Naming Conventions
 
-`ais-shader` produces intermediate and final datasets following standard naming suffixes:
+`ais-colab` produces intermediate and final datasets following standard naming suffixes:
 
 1. **Raw Input**: `*.parquet` / `*.geoparquet` (point pings in EPSG:4326).
 2. **Trajectorized Points**: `<name>-trajectorized.geoparquet`

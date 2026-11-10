@@ -44,10 +44,10 @@ import pandas as pd
 import shapely
 from shapely.geometry import LineString, Point
 
-from ais_shader.events import detect_encounters, generate_encounter_timeseries, extract_stationary_vessels
-from ais_shader.fairway import FairwayAxis
-from ais_shader.preprocessing import get_vessel_group
-from ais_shader.rws import (
+from ais_colab.events import detect_encounters, generate_encounter_timeseries, extract_stationary_vessels
+from ais_colab.fairway import FairwayAxis
+from ais_colab.preprocessing import get_vessel_group
+from ais_colab.rws import (
     build_rws_fairway,
     fetch_rws_fairway_sections,
     fetch_rws_kilometer_markers,
@@ -70,7 +70,7 @@ DEFAULT_METRIC_CRS = "EPSG:28992"  # Amersfoort / RD New
 
 def classify_vessel_group(shiptype: any) -> str:
     """
-    Classify vessel into Marine Cadastre / ais-shader standard vessel groups.
+    Classify vessel into Marine Cadastre / ais-colab standard vessel groups.
     """
     return get_vessel_group(shiptype, {})
 

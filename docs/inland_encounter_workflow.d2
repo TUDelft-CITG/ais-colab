@@ -32,7 +32,7 @@ raw_ais: Raw AIS Data (CSV/Parquet) {
 convert: Convert & Filter {
   class: process
   icon: https://raw.githubusercontent.com/Templarian/MaterialDesign/master/svg/swap-horizontal.svg
-  tooltip: "ais-shader convert csv --bbox, --start-time, --end-time"
+  tooltip: "ais-colab convert csv --bbox, --start-time, --end-time"
 }
 
 points: Flat GeoParquet Points {
@@ -49,7 +49,7 @@ trajectorize: Trajectorize {
 to_segment: Metric Segment Generation {
   class: process
   icon: https://raw.githubusercontent.com/Templarian/MaterialDesign/master/svg/vector-line.svg
-  tooltip: "ais-shader trajectory to-segment --metric-crs (e.g. EPSG:32615)"
+  tooltip: "ais-colab trajectory to-segment --metric-crs (e.g. EPSG:32615)"
 }
 
 segments: Metric 2-Point Segments {

@@ -114,7 +114,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ais-shader"
+name = "ais-colab"
 version = "0.5.1"
 source = { editable = "." }
 dependencies = [

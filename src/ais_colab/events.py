@@ -12,8 +12,8 @@ import pyproj
 import dask
 from dask.distributed import Client
 
-from ais_shader.fairway import FairwayAxis, get_utm_crs_for_lon_lat
-from ais_shader.preprocessing import to_utc_datetime
+from ais_colab.fairway import FairwayAxis, get_utm_crs_for_lon_lat
+from ais_colab.preprocessing import to_utc_datetime
 
 logger = logging.getLogger(__name__)
 

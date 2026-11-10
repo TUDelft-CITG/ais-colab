@@ -37,7 +37,7 @@ sleep 10
 
 # 3. Run the trajectorize script connecting to the SLURM Dask Scheduler
 echo "Launching trajectorize workflow..."
-uv run ais-shader trajectory compute /projects/prjs2131/data/marine-cadastre/ais_2025_12 \
+uv run ais-colab trajectory compute /projects/prjs2131/data/marine-cadastre/ais_2025_12 \
     -o /projects/prjs2131/data/marine-cadastre/ais_2025_12_trajectories.parquet \
     --scheduler ${SCHEDULER_URL} \
     --vessel-id-col mmsi \

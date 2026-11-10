@@ -10,7 +10,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ais_shader.data_loader import detect_hive_partitioning
+from ais_colab.data_loader import detect_hive_partitioning
 
 
 def _make_hive_dataset(root: Path, n_leaf_files_per_partition=5):

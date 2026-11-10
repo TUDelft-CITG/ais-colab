@@ -74,7 +74,7 @@ sleep 10
 FLAT_PARQUET="$DATA_DIR/mississippi_flat.geoparquet"
 if [ ! -e "$FLAT_PARQUET" ]; then
     echo "==> [1/4] Converting CSV to flat GeoParquet with Mississippi corridor bounding box..."
-    uv run ais-shader convert csv "$RAW_CSV" \
+    uv run ais-colab convert csv "$RAW_CSV" \
         -o "$FLAT_PARQUET" \
         --bbox "-91.5,29.0,-89.0,31.0" \
         --scheduler "${SCHEDULER_URL}"
@@ -86,7 +86,7 @@ fi
 TRAJ_PARQUET="$DATA_DIR/mississippi_trajectories.parquet"
 if [ ! -e "$TRAJ_PARQUET" ]; then
     echo "==> [2/4] Trajectorizing fixes into voyages using Dask..."
-    uv run ais-shader trajectory compute "$FLAT_PARQUET" \
+    uv run ais-colab trajectory compute "$FLAT_PARQUET" \
         -o "$TRAJ_PARQUET" \
         --scheduler "${SCHEDULER_URL}" \
         --vessel-id-col mmsi \
@@ -103,7 +103,7 @@ fi
 SEGS_PARQUET="$DATA_DIR/mississippi_segments.geoparquet"
 if [ ! -e "$SEGS_PARQUET" ]; then
     echo "==> [3/4] Generating point-pair trajectory segments..."
-    uv run ais-shader trajectory to-segment "$TRAJ_PARQUET" \
+    uv run ais-colab trajectory to-segment "$TRAJ_PARQUET" \
         -o "$SEGS_PARQUET"
 else
     echo "==> [3/4] Segments already exist: $SEGS_PARQUET"
@@ -113,7 +113,7 @@ fi
 FAIRWAY_CENTERLINE="/scratch-shared/${USER_NAME}/data/marine-cadastre/mississippi_fairway_centerline_utm15n.geoparquet"
 if [ ! -f "$FAIRWAY_CENTERLINE" ] && [ -f "$FAIRWAY_MARKERS" ]; then
     echo "==> [Fairway Preproc] Building metric fairway centerline using build-us-centerline..."
-    uv run ais-shader fairway build-us-centerline "$FAIRWAY_MARKERS" \
+    uv run ais-colab fairway build-us-centerline "$FAIRWAY_MARKERS" \
         -o "$FAIRWAY_CENTERLINE" \
         --river-name "MISSISSIPPI-LO" \
         --metric-crs "EPSG:32615"
@@ -131,7 +131,7 @@ elif [ -f "$FAIRWAY_MARKERS" ]; then
     FAIRWAY_ARG="--fairway-markers $FAIRWAY_MARKERS --river-name MISSISSIPPI-LO --metric-crs EPSG:32615"
 fi
 
-uv run ais-shader events encounters "$SEGS_PARQUET" \
+uv run ais-colab events encounters "$SEGS_PARQUET" \
     -o "$ENCOUNTERS_PARQUET" \
     $FAIRWAY_ARG \
     --scheduler "${SCHEDULER_URL}" \

@@ -1,6 +1,6 @@
 # Inland Vessel Encounter Detection & Stationary Object Methodology
 
-This document details the mathematical framework, algorithmic design, and workflow used by `ais-shader` to detect vessel encounters (head-on, overtaking, parallel sailing, crossing, and encounters with stationary obstacles) on inland waterways such as the Mississippi River, Waal, and Rhine.
+This document details the mathematical framework, algorithmic design, and workflow used by `ais-colab` to detect vessel encounters (head-on, overtaking, parallel sailing, crossing, and encounters with stationary obstacles) on inland waterways such as the Mississippi River, Waal, and Rhine.
 
 ---
 
@@ -16,15 +16,15 @@ Detecting encounters in inland waterways poses unique challenges compared to ope
 ```mermaid
 flowchart TD
     subgraph S1["1. Preprocessing & Trajectorization"]
-        RAW[("Raw AIS Data\n(CSV / Parquet)")] --> CONV["ais-shader convert csv\n(--bbox, --start-time, --end-time)"]
+        RAW[("Raw AIS Data\n(CSV / Parquet)")] --> CONV["ais-colab convert csv\n(--bbox, --start-time, --end-time)"]
         CONV --> PTS[("Normalized AIS Points\n(UTC, Hive Date Partitioned)")]
-        PTS --> TRAJ["ais-shader trajectory compute\n(Voyage segmentation & outlier filtering)"]
-        TRAJ --> SEGM["ais-shader trajectory to-segment\n(--metric-crs EPSG:32615)"]
+        PTS --> TRAJ["ais-colab trajectory compute\n(Voyage segmentation & outlier filtering)"]
+        TRAJ --> SEGM["ais-colab trajectory to-segment\n(--metric-crs EPSG:32615)"]
         SEGM --> SEGS_GEO[("Metric 2-Point Segments\n(segments_utm15n.geoparquet)")]
     end
 
     subgraph S2["2. Waterway Fairway Axis Modeling"]
-        MARKERS[("Fairway Data\n(USACE River Miles / Centerline)")] --> BUILD["ais-shader fairway build-us-centerline\n(Cubic B-Spline fitted centerline)"]
+        MARKERS[("Fairway Data\n(USACE River Miles / Centerline)")] --> BUILD["ais-colab fairway build-us-centerline\n(Cubic B-Spline fitted centerline)"]
         BUILD --> AXIS[("Metric Fairway Centerline\n(fairway_centerline_utm15n.geoparquet)")]
         AXIS --> PROJ["Frenet-Serret Projection\n(cKDTree O(log N) lookup)"]
         SEGS_GEO --> PROJ
@@ -138,7 +138,7 @@ During pairwise encounter candidate evaluation, each vessel's instantaneous spee
 
 ## 4. Analytical Closest Point of Approach (CPA)
 
-Instead of discretizing trajectories into fine time steps to find minimum distance, `ais-shader` calculates the exact mathematical minimum distance between two time-overlapping linear segments analytically.
+Instead of discretizing trajectories into fine time steps to find minimum distance, `ais-colab` calculates the exact mathematical minimum distance between two time-overlapping linear segments analytically.
 
 Let two vessels have linear trajectories over their mutual overlap window $[t_{\text{start}}, t_{\text{end}}]$ with duration $\Delta t = t_{\text{end}} - t_{\text{start}}$:
 $$\vec{r}_1(t) = \vec{r}_{1,0} + \vec{v}_1 \tau, \quad \vec{r}_2(t) = \vec{r}_{2,0} + \vec{v}_2 \tau \quad (\tau \in [0, \Delta t])$$
@@ -208,20 +208,20 @@ To visualize and inspect encounters dynamically in GIS software (QGIS Temporal C
 ### Running Encounter Detection on Mississippi River AIS Data
 ```bash
 # 1. Build metric fairway centerline from USACE river markers
-uv run ais-shader fairway build-us-centerline \
+uv run ais-colab fairway build-us-centerline \
     /data/marine-cadastre/mississippi_markers.geojson \
     -o /data/mississippi_fairway_centerline_utm15n.geoparquet \
     --river-name "MISSISSIPPI-LO" \
     --metric-crs "EPSG:32615"
 
 # 2. Extract and project 1-day trajectory segments
-uv run ais-shader trajectory to-segment \
+uv run ais-colab trajectory to-segment \
     /data/mississippi_trajectories.parquet \
     -o /data/mississippi_segments_utm15n.geoparquet \
     --metric-crs "EPSG:32615"
 
 # 3. Detect encounters, extract stationary obstacles, and build dynamic time series
-uv run ais-shader events encounters \
+uv run ais-colab events encounters \
     /data/mississippi_segments_utm15n.geoparquet \
     -o /data/mississippi_encounters.geoparquet \
     --fairway-markers /data/mississippi_fairway_centerline_utm15n.geoparquet \

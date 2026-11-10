@@ -31,9 +31,9 @@ import pandas as pd
 from shapely.geometry import LineString, Point
 from tabulate import tabulate
 
-from ais_shader.events import detect_polygon_entry_exit, extract_stationary_vessels
-from ais_shader.preprocessing import get_vessel_group
-from ais_shader.rws import fetch_rws_lock_chambers
+from ais_colab.events import detect_polygon_entry_exit, extract_stationary_vessels
+from ais_colab.preprocessing import get_vessel_group
+from ais_colab.rws import fetch_rws_lock_chambers
 
 logging.basicConfig(
     level=logging.INFO,
