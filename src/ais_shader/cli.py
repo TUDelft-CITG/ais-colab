@@ -1288,6 +1288,11 @@ def behavior_compute_knn(windows_file, output_file, n_neighbors, compatibility_l
     help="Use legacy UMAP 0.5.x layout pipeline instead of UMAP 0.6+ recursive/Adam pipeline (default: False).",
 )
 @click.option(
+    "--by-vessel-category/--no-by-vessel-category",
+    default=True,
+    help="Fit global anomaly detection (IsolationForest) per vessel category (pilot, hsc, cargo, tanker, etc.) to avoid flagging normal pilot/HSC maneuvers as global outliers (default: True).",
+)
+@click.option(
     "--knn-file",
     type=click.Path(exists=True, path_type=Path),
     default=None,
@@ -1320,6 +1325,7 @@ def behavior_umap(
     contamination,
     fit_sample_size,
     compatibility_layout,
+    by_vessel_category,
     knn_file,
     save_model,
     model_file,
@@ -1337,6 +1343,7 @@ def behavior_umap(
         contamination=contamination,
         fit_sample_size=fit_sample_size,
         compatibility_layout=compatibility_layout,
+        by_vessel_category=by_vessel_category,
         knn_file=knn_file,
         save_model=save_model,
         model_file=model_file,

@@ -59,6 +59,26 @@ _ANOMALY_PLOT_SPECS = (
 )
 
 
+def map_shiptype_to_category(shiptype_series: pd.Series) -> pd.Series:
+    """Map numeric AIS ship type codes (``shiptypeais``) to behavioral vessel categories."""
+    codes = pd.to_numeric(shiptype_series, errors="coerce")
+    categories = np.full(len(codes), "other", dtype=object)
+    valid = codes.notna().to_numpy()
+    vals = codes.fillna(-1).astype(int).to_numpy()
+
+    categories[valid & (vals >= 70) & (vals <= 79)] = "cargo"
+    categories[valid & (vals >= 80) & (vals <= 89)] = "tanker"
+    categories[valid & (vals >= 60) & (vals <= 69)] = "passenger"
+    categories[valid & (vals >= 40) & (vals <= 49)] = "hsc"
+    categories[valid & (vals == 30)] = "fishing"
+    categories[valid & np.isin(vals, [31, 32, 52])] = "tug_tow"
+    categories[valid & (vals == 50)] = "pilot"
+    categories[valid & (vals == 33)] = "dredging"
+    categories[valid & np.isin(vals, [35, 51, 55])] = "sar_military"
+    categories[valid & np.isin(vals, [36, 37])] = "pleasure"
+    return pd.Series(categories, index=shiptype_series.index, dtype="object")
+
+
 def haversine_np(lon1, lat1, lon2, lat2):
     """Vectorized haversine distance in meters."""
     lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
@@ -391,6 +411,7 @@ def run_umap_and_anomalies(
     fit_sample_size: Optional[int] = 100_000,
     batch_size: int = 100_000,
     compatibility_layout: bool = False,
+    by_vessel_category: bool = True,
     precomputed_knn: Optional[tuple] = None,
     return_model: bool = False,
     random_state: int = 42,
@@ -522,10 +543,34 @@ def run_umap_and_anomalies(
         out["is_local_anomaly"] = lof.fit_predict(fit_coords_64) == -1
         out["local_anomaly_score"] = -lof.negative_outlier_factor_
 
-    logger.info("Running Global Anomaly Detection (Isolation Forest, contamination=%s, n_jobs=-1)...", contamination)
-    iso = IsolationForest(n_estimators=100, contamination=contamination, n_jobs=-1, random_state=random_state)
-    iso.fit(X_fit)
-    out["is_global_anomaly"], out["global_anomaly_score"] = _batched_predict_and_score(iso, X_scaled, batch_size)
+    logger.info("Running Global Anomaly Detection (Isolation Forest, contamination=%s, by_vessel_category=%s, n_jobs=-1)...", contamination, by_vessel_category)
+    iso_global = IsolationForest(n_estimators=100, contamination=contamination, n_jobs=-1, random_state=random_state)
+    iso_global.fit(X_fit)
+    iso_by_category: dict[str, IsolationForest] = {}
+
+    if by_vessel_category and "shiptypeais" in out.columns:
+        out["vessel_category"] = map_shiptype_to_category(out["shiptypeais"])
+        global_anom = np.zeros(n_rows, dtype=bool)
+        global_score = np.zeros(n_rows, dtype=np.float64)
+        for cat, idx in out.groupby("vessel_category").groups.items():
+            pos = out.index.get_indexer(idx)
+            if len(pos) >= 100:
+                cat_X = X_scaled[pos]
+                if fit_sample_size is not None and len(cat_X) > fit_sample_size:
+                    cat_fit_idx = np.random.default_rng(random_state).choice(len(cat_X), size=fit_sample_size, replace=False)
+                    cat_X_fit = cat_X[cat_fit_idx]
+                else:
+                    cat_X_fit = cat_X
+                cat_iso = IsolationForest(n_estimators=100, contamination=contamination, n_jobs=-1, random_state=random_state)
+                cat_iso.fit(cat_X_fit)
+                iso_by_category[cat] = cat_iso
+                global_anom[pos], global_score[pos] = _batched_predict_and_score(cat_iso, cat_X, batch_size)
+            else:
+                global_anom[pos], global_score[pos] = _batched_predict_and_score(iso_global, X_scaled[pos], batch_size)
+        out["is_global_anomaly"] = global_anom
+        out["global_anomaly_score"] = global_score
+    else:
+        out["is_global_anomaly"], out["global_anomaly_score"] = _batched_predict_and_score(iso_global, X_scaled, batch_size)
 
     conditions = [
         out["is_local_anomaly"] & out["is_global_anomaly"],
@@ -546,7 +591,9 @@ def run_umap_and_anomalies(
             "reducer": reducer,
             "cluster_classifier": knn_clf,
             "lof": lof_novelty,
-            "iso": iso,
+            "iso": iso_global,
+            "iso_by_category": iso_by_category,
+            "by_vessel_category": by_vessel_category,
             "feature_cols": BEHAVIOR_FEATURE_COLS,
             "cluster_method": cluster_method,
         }
@@ -582,9 +629,21 @@ def transform_with_behavior_model(
     out["is_local_anomaly"], out["local_anomaly_score"] = _batched_predict_and_score(
         model_bundle["lof"], np.ascontiguousarray(embedding, dtype=np.float64), batch_size
     )
-    out["is_global_anomaly"], out["global_anomaly_score"] = _batched_predict_and_score(
-        model_bundle["iso"], X_scaled, batch_size
-    )
+    iso_by_cat = model_bundle.get("iso_by_category") or {}
+    if model_bundle.get("by_vessel_category") and iso_by_cat and "shiptypeais" in out.columns:
+        out["vessel_category"] = map_shiptype_to_category(out["shiptypeais"])
+        global_anom = np.zeros(n_rows, dtype=bool)
+        global_score = np.zeros(n_rows, dtype=np.float64)
+        for cat, idx in out.groupby("vessel_category").groups.items():
+            pos = out.index.get_indexer(idx)
+            model = iso_by_cat.get(cat, model_bundle["iso"])
+            global_anom[pos], global_score[pos] = _batched_predict_and_score(model, X_scaled[pos], batch_size)
+        out["is_global_anomaly"] = global_anom
+        out["global_anomaly_score"] = global_score
+    else:
+        out["is_global_anomaly"], out["global_anomaly_score"] = _batched_predict_and_score(
+            model_bundle["iso"], X_scaled, batch_size
+        )
 
     conditions = [
         out["is_local_anomaly"] & out["is_global_anomaly"],
@@ -714,6 +773,7 @@ def run_umap_behavior(
     contamination: float = 0.015,
     fit_sample_size: Optional[int] = 100_000,
     compatibility_layout: bool = False,
+    by_vessel_category: bool = True,
     knn_file: Optional[Path | str] = None,
     save_model: Optional[Path | str] = None,
     model_file: Optional[Path | str] = None,
@@ -740,6 +800,7 @@ def run_umap_behavior(
             contamination=contamination,
             fit_sample_size=fit_sample_size,
             compatibility_layout=compatibility_layout,
+            by_vessel_category=by_vessel_category,
             precomputed_knn=precomputed_knn,
             return_model=(save_model is not None),
         )
