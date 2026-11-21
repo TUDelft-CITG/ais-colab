@@ -1438,9 +1438,9 @@ def behavior_align(
 )
 @click.option(
     "--color-by",
-    type=click.Choice(["anomaly", "cluster"]),
+    type=click.Choice(["anomaly", "cluster", "sog"]),
     default="anomaly",
-    help="Color points by anomaly_type or cluster (default: anomaly).",
+    help="Color points by anomaly_type, cluster, or sog (default: anomaly).",
 )
 @click.option(
     "--format",

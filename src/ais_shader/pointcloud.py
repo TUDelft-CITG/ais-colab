@@ -225,29 +225,35 @@ def export_behavior_pointcloud(
     else:
         raise ValueError(f"Unsupported space: {space!r}. Expected 'geo' or 'umap'.")
 
+    anomaly_types = gdf["anomaly_type"] if "anomaly_type" in gdf.columns else ["normal"] * n
+
     if color_by == "anomaly":
         rgb = np.array(
-            [_ANOMALY_COLOR_MAP.get(t, _ANOMALY_COLOR_MAP["normal"]) for t in gdf["anomaly_type"]],
+            [_ANOMALY_COLOR_MAP.get(t, _ANOMALY_COLOR_MAP["normal"]) for t in anomaly_types],
             dtype=np.float32,
         )
-    elif color_by == "cluster":
+    elif color_by == "cluster" and "cluster" in gdf.columns:
         cmap = matplotlib.colormaps["tab20"].resampled(20)
         clusters = gdf["cluster"].to_numpy()
         rgb = np.array(
             [(0.45, 0.45, 0.45) if c < 0 else cmap(int(c) % 20)[:3] for c in clusters],
             dtype=np.float32,
         )
+    elif color_by in {"sog", "cluster"}:
+        cmap = matplotlib.colormaps["viridis"]
+        sog_norm = np.clip(gdf["sog_mean"].to_numpy() / 20.0, 0.0, 1.0)
+        rgb = cmap(sog_norm)[:, :3].astype(np.float32)
     else:
-        raise ValueError(f"Unsupported color_by: {color_by!r}. Expected 'anomaly' or 'cluster'.")
+        raise ValueError(f"Unsupported color_by: {color_by!r}. Expected 'anomaly', 'cluster', or 'sog'.")
 
     if resolved_fmt == "las":
         classifications = np.array(
-            [_ANOMALY_CLASS_MAP.get(t, 1) for t in gdf["anomaly_type"]],
+            [_ANOMALY_CLASS_MAP.get(t, 1) for t in anomaly_types],
             dtype=np.uint8,
         )
         return write_las(out_path, positions=positions, rgb_colors=rgb, classifications=classifications)
 
-    is_anom = (gdf["anomaly_type"] != "normal").to_numpy()
+    is_anom = np.array([t != "normal" for t in anomaly_types], dtype=bool)
     radius = np.where(is_anom, 0.35 if space == "umap" else 0.8, 0.12 if space == "umap" else 0.25).astype(np.float32)
     scales = np.stack([radius, radius, radius], axis=1)
     rotations = np.zeros((n, 4), dtype=np.float32)
