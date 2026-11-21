@@ -37,6 +37,8 @@ from sklearn.preprocessing import StandardScaler
 import umap
 from umap.umap_ import nearest_neighbors
 
+from .preprocessing import build_vessel_mapping, get_vessel_group
+
 logger = logging.getLogger(__name__)
 
 BEHAVIOR_FEATURE_COLS = [
@@ -59,24 +61,41 @@ _ANOMALY_PLOT_SPECS = (
 )
 
 
-def map_shiptype_to_category(shiptype_series: pd.Series) -> pd.Series:
-    """Map numeric AIS ship type codes (``shiptypeais``) to behavioral vessel categories."""
-    codes = pd.to_numeric(shiptype_series, errors="coerce")
-    categories = np.full(len(codes), "other", dtype=object)
-    valid = codes.notna().to_numpy()
-    vals = codes.fillna(-1).astype(int).to_numpy()
+VESSEL_GROUPS = (
+    "Cargo",
+    "Tanker",
+    "Fishing",
+    "Passenger",
+    "Tug, Towing",
+    "Support",
+    "High-Speed Craft (HSC)",
+    "Dredging",
+    "Military",
+    "Pleasure Craft/Sailing",
+    "Other",
+    "Not Available",
+)
 
-    categories[valid & (vals >= 70) & (vals <= 79)] = "cargo"
-    categories[valid & (vals >= 80) & (vals <= 89)] = "tanker"
-    categories[valid & (vals >= 60) & (vals <= 69)] = "passenger"
-    categories[valid & (vals >= 40) & (vals <= 49)] = "hsc"
-    categories[valid & (vals == 30)] = "fishing"
-    categories[valid & np.isin(vals, [31, 32, 52])] = "tug_tow"
-    categories[valid & (vals == 50)] = "pilot"
-    categories[valid & (vals == 33)] = "dredging"
-    categories[valid & np.isin(vals, [35, 51, 55])] = "sar_military"
-    categories[valid & np.isin(vals, [36, 37])] = "pleasure"
-    return pd.Series(categories, index=shiptype_series.index, dtype="object")
+_DEFAULT_VESSEL_GROUPS_JSON = Path(__file__).resolve().parents[2] / "resources" / "vessel_groups.json"
+
+
+def map_shiptype_to_category(shiptype_series: pd.Series) -> pd.Series:
+    """Map AIS ship type codes to Marine Cadastre vessel groups using ``resources/vessel_groups.json``."""
+    mapping = build_vessel_mapping(_DEFAULT_VESSEL_GROUPS_JSON) if _DEFAULT_VESSEL_GROUPS_JSON.exists() else {}
+    return shiptype_series.map(lambda st: get_vessel_group(st, mapping))
+
+
+def _build_feature_matrix(df: pd.DataFrame, include_vessel_type: bool) -> tuple[np.ndarray, list[str]]:
+    """Build feature matrix from motion/shape features and optional one-hot Marine Cadastre vessel groups."""
+    cols = list(BEHAVIOR_FEATURE_COLS)
+    X_base = np.nan_to_num(df[BEHAVIOR_FEATURE_COLS].to_numpy(copy=True), nan=0.0)
+    if not include_vessel_type or "shiptypeais" not in df.columns:
+        return X_base, cols
+
+    groups = df["vessel_group"] if "vessel_group" in df.columns else map_shiptype_to_category(df["shiptypeais"])
+    one_hot = np.column_stack([(groups == g).to_numpy(dtype=np.float64) for g in VESSEL_GROUPS])
+    cols.extend(f"vessel_group_{g}" for g in VESSEL_GROUPS)
+    return np.hstack([X_base, one_hot]), cols
 
 
 def haversine_np(lon1, lat1, lon2, lat2):
@@ -335,13 +354,14 @@ def compute_and_save_knn(
     output_file: Path | str,
     n_neighbors: int = 50,
     compatibility_layout: bool = False,
+    include_vessel_type: bool = True,
     random_state: Optional[int] = 42,
 ) -> Path:
     """Precompute and store UMAP k-nearest neighbors (.npz) for a prepared windows Parquet."""
     df = pd.read_parquet(windows_file)
     _validate_window_df(df)
 
-    X = np.nan_to_num(df[BEHAVIOR_FEATURE_COLS].to_numpy(copy=True), nan=0.0)
+    X, _ = _build_feature_matrix(df, include_vessel_type=include_vessel_type)
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
@@ -412,6 +432,7 @@ def run_umap_and_anomalies(
     batch_size: int = 100_000,
     compatibility_layout: bool = False,
     by_vessel_category: bool = True,
+    include_vessel_type: bool = True,
     precomputed_knn: Optional[tuple] = None,
     return_model: bool = False,
     random_state: int = 42,
@@ -424,8 +445,8 @@ def run_umap_and_anomalies(
     """
     _validate_window_df(df)
 
-    logger.info("Standardizing motion & shape features (%d features)...", len(BEHAVIOR_FEATURE_COLS))
-    X = np.nan_to_num(df[BEHAVIOR_FEATURE_COLS].to_numpy(copy=True), nan=0.0)
+    X, used_feature_cols = _build_feature_matrix(df, include_vessel_type=include_vessel_type)
+    logger.info("Standardizing motion, shape & vessel-type features (%d features)...", len(used_feature_cols))
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
@@ -594,7 +615,8 @@ def run_umap_and_anomalies(
             "iso": iso_global,
             "iso_by_category": iso_by_category,
             "by_vessel_category": by_vessel_category,
-            "feature_cols": BEHAVIOR_FEATURE_COLS,
+            "include_vessel_type": include_vessel_type,
+            "feature_cols": used_feature_cols,
             "cluster_method": cluster_method,
         }
         return gdf, model_bundle
@@ -608,7 +630,7 @@ def transform_with_behavior_model(
 ) -> gpd.GeoDataFrame:
     """Map new behavioral windows into a previously fitted UMAP/clustering/anomaly model."""
     _validate_window_df(df)
-    X = np.nan_to_num(df[model_bundle["feature_cols"]].to_numpy(copy=True), nan=0.0)
+    X, _ = _build_feature_matrix(df, include_vessel_type=model_bundle.get("include_vessel_type", False))
     X_scaled = model_bundle["scaler"].transform(X)
 
     n_rows = len(df)
@@ -774,6 +796,7 @@ def run_umap_behavior(
     fit_sample_size: Optional[int] = 100_000,
     compatibility_layout: bool = False,
     by_vessel_category: bool = True,
+    include_vessel_type: bool = True,
     knn_file: Optional[Path | str] = None,
     save_model: Optional[Path | str] = None,
     model_file: Optional[Path | str] = None,
@@ -801,6 +824,7 @@ def run_umap_behavior(
             fit_sample_size=fit_sample_size,
             compatibility_layout=compatibility_layout,
             by_vessel_category=by_vessel_category,
+            include_vessel_type=include_vessel_type,
             precomputed_knn=precomputed_knn,
             return_model=(save_model is not None),
         )
@@ -838,6 +862,7 @@ def run_aligned_umap(
     alignment_regularisation: float = 0.01,
     alignment_window_size: int = 3,
     compatibility_layout: bool = False,
+    include_vessel_type: bool = True,
     random_state: int = 42,
 ) -> list[Path]:
     """Jointly embed time-ordered behavioral window slices using ``umap.AlignedUMAP``."""
@@ -858,9 +883,10 @@ def run_aligned_umap(
         dfs.append(df)
 
     # Fit shared StandardScaler across all slices
-    all_X = np.vstack([np.nan_to_num(d[BEHAVIOR_FEATURE_COLS].to_numpy(copy=True), nan=0.0) for d in dfs])
+    raw_slices = [_build_feature_matrix(d, include_vessel_type=include_vessel_type)[0] for d in dfs]
+    all_X = np.vstack(raw_slices)
     scaler = StandardScaler().fit(all_X)
-    slices = [scaler.transform(np.nan_to_num(d[BEHAVIOR_FEATURE_COLS].to_numpy(copy=True), nan=0.0)) for d in dfs]
+    slices = [scaler.transform(x) for x in raw_slices]
 
     # Build adjacent slice relations by matching shared vessels (first occurrence per vessel in each slice)
     relations = []

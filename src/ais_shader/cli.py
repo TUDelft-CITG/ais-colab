@@ -1290,7 +1290,12 @@ def behavior_compute_knn(windows_file, output_file, n_neighbors, compatibility_l
 @click.option(
     "--by-vessel-category/--no-by-vessel-category",
     default=True,
-    help="Fit global anomaly detection (IsolationForest) per vessel category (pilot, hsc, cargo, tanker, etc.) to avoid flagging normal pilot/HSC maneuvers as global outliers (default: True).",
+    help="Fit global anomaly detection (IsolationForest) per Marine Cadastre vessel group (default: True).",
+)
+@click.option(
+    "--include-vessel-type/--no-include-vessel-type",
+    default=True,
+    help="Include one-hot Marine Cadastre vessel group features in UMAP embedding so behavior is conditional on ship type (default: True).",
 )
 @click.option(
     "--knn-file",
@@ -1326,6 +1331,7 @@ def behavior_umap(
     fit_sample_size,
     compatibility_layout,
     by_vessel_category,
+    include_vessel_type,
     knn_file,
     save_model,
     model_file,
@@ -1344,6 +1350,7 @@ def behavior_umap(
         fit_sample_size=fit_sample_size,
         compatibility_layout=compatibility_layout,
         by_vessel_category=by_vessel_category,
+        include_vessel_type=include_vessel_type,
         knn_file=knn_file,
         save_model=save_model,
         model_file=model_file,
