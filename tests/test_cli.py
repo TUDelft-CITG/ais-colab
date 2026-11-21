@@ -76,6 +76,7 @@ def test_behavior_help():
     assert "compute-knn" in result.output
     assert "umap" in result.output
     assert "align" in result.output
+    assert "export-pointcloud" in result.output
 
 def test_behavior_extract_windows_help():
     runner = CliRunner()

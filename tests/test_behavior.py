@@ -15,6 +15,7 @@ from ais_shader.behavior import (
     run_umap_and_anomalies,
     run_umap_behavior,
 )
+from ais_shader.pointcloud import export_behavior_pointcloud
 
 
 def _make_synthetic_ais_points(n_vessels: int = 8, pings_per_vessel: int = 8) -> pd.DataFrame:
@@ -148,3 +149,10 @@ def test_precomputed_knn_and_model_reuse_and_aligned_umap(tmp_path: Path):
     )
     assert len(aligned_paths) == 2
     assert all(p.exists() for p in aligned_paths)
+
+    # 4. Export point clouds (LAS 1.2 & Gaussian Splat PLY)
+    m1_parquet = tmp_path / "m01_umap" / "umap_behavior.geoparquet"
+    las_path = export_behavior_pointcloud(m1_parquet, tmp_path / "m01_geo.las", space="geo", color_by="anomaly")
+    ply_path = export_behavior_pointcloud(m1_parquet, tmp_path / "m01_umap.ply", space="umap", color_by="cluster")
+    assert las_path.exists() and las_path.read_bytes()[:4] == b"LASF"
+    assert ply_path.exists() and ply_path.read_bytes().startswith(b"ply\n")

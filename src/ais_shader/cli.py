@@ -15,6 +15,7 @@ from .preprocessing import run_preprocessing, run_wkb_conversion, run_ndjson_con
 from .analysis import run_passage_analysis
 from .behavior import compute_and_save_knn, run_aligned_umap, run_extract_windows, run_umap_behavior
 from .events import run_line_crossing_detection, run_polygon_entry_exit_detection, run_encounter_detection
+from .pointcloud import export_behavior_pointcloud
 from .data_loader import detect_hive_partitioning
 from .moving_dask.trajectory import trajectorize_dataframe
 
@@ -1414,6 +1415,50 @@ def behavior_align(
         sample_per_slice=sample_per_slice,
         alignment_regularisation=alignment_regularisation,
         alignment_window_size=alignment_window_size,
+    )
+
+
+@behavior.command(name="export-pointcloud")
+@click.argument(
+    "input-file",
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "--output-file",
+    "-o",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Output point cloud file (.las or .ply).",
+)
+@click.option(
+    "--space",
+    type=click.Choice(["geo", "umap"]),
+    default="geo",
+    help="Coordinate space: 'geo' (geographic km + SOG z) or 'umap' (normalized UMAP + SOG z).",
+)
+@click.option(
+    "--color-by",
+    type=click.Choice(["anomaly", "cluster"]),
+    default="anomaly",
+    help="Color points by anomaly_type or cluster (default: anomaly).",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["las", "ply"]),
+    default=None,
+    help="Override output format (inferred from extension by default).",
+)
+def behavior_export_pointcloud(input_file, output_file, space, color_by, fmt):
+    """
+    Export UMAP behavioral GeoParquet to LAS 1.2 or 3D Gaussian Splat PLY (for Blender 5.3+).
+    """
+    export_behavior_pointcloud(
+        input_file=input_file,
+        output_file=output_file,
+        space=space,
+        color_by=color_by,
+        fmt=fmt,
     )
 
 
