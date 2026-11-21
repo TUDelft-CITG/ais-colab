@@ -68,3 +68,31 @@ def test_events_encounters_help():
     assert "--metric-crs" in result.output
     assert "--event-file" in result.output
 
+def test_behavior_help():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["behavior", "--help"])
+    assert result.exit_code == 0
+    assert "extract-windows" in result.output
+    assert "compute-knn" in result.output
+    assert "umap" in result.output
+    assert "align" in result.output
+
+def test_behavior_extract_windows_help():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["behavior", "extract-windows", "--help"])
+    assert result.exit_code == 0
+    assert "--cluster-type" in result.output
+    assert "--vessel-id-col" in result.output
+    assert "--time-col" in result.output
+
+def test_behavior_umap_help():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["behavior", "umap", "--help"])
+    assert result.exit_code == 0
+    assert "--cluster-method" in result.output
+    assert "--fit-sample-size" in result.output
+    assert "--compatibility-layout" in result.output
+    assert "--contamination" in result.output
+    assert "--output-dir" in result.output
+
+

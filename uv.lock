@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 
 [[package]]
@@ -129,6 +129,7 @@ dependencies = [
     { name = "geoviews" },
     { name = "holoviews" },
     { name = "hvplot" },
+    { name = "matplotlib" },
     { name = "mlflow" },
     { name = "morecantile" },
     { name = "netcdf4" },
@@ -138,14 +139,19 @@ dependencies = [
     { name = "pyzipper" },
     { name = "rio-cogeo" },
     { name = "rioxarray" },
+    { name = "scikit-learn" },
     { name = "tabulate" },
     { name = "tqdm" },
+    { name = "umap-learn" },
     { name = "zarr" },
 ]
 
 [package.optional-dependencies]
 cgal = [
     { name = "pybind11" },
+]
+slurm = [
+    { name = "dask-jobqueue" },
 ]
 
 [package.dev-dependencies]
@@ -163,10 +169,12 @@ requires-dist = [
     { name = "colorcet", specifier = ">=3.1.0" },
     { name = "dask", extras = ["distributed"], specifier = ">=2025.11.0" },
     { name = "dask-geopandas", specifier = ">=0.5.0" },
+    { name = "dask-jobqueue", marker = "extra == 'slurm'", specifier = ">=0.9.0" },
     { name = "datashader", git = "https://github.com/holoviz/datashader?branch=main" },
     { name = "geoviews", specifier = ">=1.15.0" },
     { name = "holoviews", specifier = ">=1.22.0" },
     { name = "hvplot", specifier = ">=0.12.1" },
+    { name = "matplotlib", specifier = ">=3.9.0" },
     { name = "mlflow", specifier = ">=2.11.0" },
     { name = "morecantile", specifier = ">=7.0.0" },
     { name = "netcdf4", specifier = ">=1.7.3" },
@@ -177,11 +185,13 @@ requires-dist = [
     { name = "pyzipper", specifier = ">=0.3.6" },
     { name = "rio-cogeo", specifier = ">=7.0.0" },
     { name = "rioxarray", specifier = ">=0.20.0" },
+    { name = "scikit-learn", specifier = ">=1.5.0" },
     { name = "tabulate", specifier = ">=0.10.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "umap-learn", specifier = ">=0.6.0" },
     { name = "zarr", specifier = ">=2.18.0" },
 ]
-provides-extras = ["cgal"]
+provides-extras = ["cgal", "slurm"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -674,6 +684,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a6/da/ea20602a97db7bc1c4322eaf5c14b209cac9829782f17680a2c590d8f838/dask_geopandas-0.5.0.tar.gz", hash = "sha256:b1fc2a041550d609b87db9fcfad2e8217f7336e3436415da11ba9dc8437272b1", size = 63726, upload-time = "2025-06-02T20:49:19.762Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/41/ea5282553f26f387a95d6c46a9d0921f53a4a09f6bb0df1bc8edaa63d557/dask_geopandas-0.5.0-py3-none-any.whl", hash = "sha256:0b6c2a8f7fae94667c4af539e591fa7fb59c5c3206188fa51e461d395ef80240", size = 55067, upload-time = "2025-06-02T20:49:18.729Z" },
+]
+
+[[package]]
+name = "dask-jobqueue"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dask" },
+    { name = "distributed" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/32/2a/751bb5ba28533476b1c667eac158e5aa1840c416fd61d425328ef48a894a/dask_jobqueue-0.9.0.tar.gz", hash = "sha256:494ef64b7bb3848c7d72ed334c288030caca6a09dca54cfaa3f395f4ba7f5c47", size = 56475, upload-time = "2024-08-22T09:25:21.56Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/77/606f138bf70b14865842b3ec9a58dc1ba97153f466e5876fe4ced980f91f/dask_jobqueue-0.9.0-py2.py3-none-any.whl", hash = "sha256:253dfc4f0b8722201a08e05b841859dfeea1f6698ff21eff0d9370e5aa8ae20f", size = 52037, upload-time = "2024-08-22T09:25:20.106Z" },
 ]
 
 [[package]]
@@ -2350,6 +2373,22 @@ wheels = [
 ]
 
 [[package]]
+name = "pynndescent"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "joblib" },
+    { name = "llvmlite" },
+    { name = "numba" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fc/c6/e8772d376540049f9caeaffe7927b7f3088982e6c095397bb41d9d224a30/pynndescent-0.7.0.tar.gz", hash = "sha256:54f097a003bfdb917225e1bcf55c4027e283a37a2b5e3cae4b4aaf21197f6d1c", size = 3040551, upload-time = "2026-10-27T17:36:39.385Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/63/fe905ec765fcb92a8a235e5a77ba591f620316c192a960dda1ce07d028eb/pynndescent-0.7.0-py3-none-any.whl", hash = "sha256:05592399f5fbf07d77590f532ed2a2e3b035ec066813eb5a097632b9ffb9e938", size = 112578, upload-time = "2026-10-27T17:36:38.091Z" },
+]
+
+[[package]]
 name = "pyogrio"
 version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2970,6 +3009,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/91/7a/146a99696aee0609e3712f2b44c6274566bc368dfe8375191278045186b8/uc-micro-py-1.0.3.tar.gz", hash = "sha256:d321b92cff673ec58027c04015fcaa8bb1e005478643ff4a500882eaab88c48a", size = 6043, upload-time = "2024-02-09T16:52:01.654Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/37/87/1f677586e8ac487e29672e4b17455758fce261de06a0d086167bb760361a/uc_micro_py-1.0.3-py3-none-any.whl", hash = "sha256:db1dffff340817673d7b466ec86114a9dc0e9d4d9b5ba229d9d60e5c12600cd5", size = 6229, upload-time = "2024-02-09T16:52:00.371Z" },
+]
+
+[[package]]
+name = "umap-learn"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numba" },
+    { name = "numpy" },
+    { name = "pynndescent" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/93/61/01c1de38a5e3b19e59afd845ca33a83bf8fe0282f250ef976b06ad153f4c/umap_learn-0.6.0.tar.gz", hash = "sha256:2f56945fdf8470efc12dc79c91d8a091a33d1e03ea3251d76e019da8e3617c38", size = 141068, upload-time = "2026-11-10T13:28:28.981Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c8/8b/1f0f17e6515c70940974e5ca962fffdc2ea9da0093344611f9841145e6cb/umap_learn-0.6.0-py3-none-any.whl", hash = "sha256:31f0f6ab31e95463a33404b5228921d24f4314f1607c9db405446ab0fad23663", size = 136975, upload-time = "2026-11-10T13:28:27.411Z" },
 ]
 
 [[package]]

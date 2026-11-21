@@ -13,6 +13,7 @@ from .renderer import run_rendering
 from .postprocessing import run_post_processing
 from .preprocessing import run_preprocessing, run_wkb_conversion, run_ndjson_conversion, run_csv_conversion, run_linestring_generation, run_segment_generation, run_outlier_filtering, normalize_to_epoch
 from .analysis import run_passage_analysis
+from .behavior import compute_and_save_knn, run_aligned_umap, run_extract_windows, run_umap_behavior
 from .events import run_line_crossing_detection, run_polygon_entry_exit_detection, run_encounter_detection
 from .data_loader import detect_hive_partitioning
 from .moving_dask.trajectory import trajectorize_dataframe
@@ -74,7 +75,37 @@ def cli():
     "--scheduler",
     type=str,
     default=None,
-    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local cluster.",
+    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local or Slurm cluster.",
+)
+@click.option(
+    "--cluster-type",
+    type=click.Choice(["local", "slurm"]),
+    default="local",
+    help="Dask cluster type when --scheduler is not set (default: local).",
+)
+@click.option(
+    "--n-workers",
+    type=int,
+    default=4,
+    help="Number of Slurm worker jobs when --cluster-type=slurm (default: 4).",
+)
+@click.option(
+    "--cores-per-worker",
+    type=int,
+    default=16,
+    help="Cores per Slurm worker job (default: 16).",
+)
+@click.option(
+    "--memory-per-worker",
+    type=str,
+    default="28GB",
+    help="Memory per Slurm worker job (default: 28GB).",
+)
+@click.option(
+    "--walltime",
+    type=str,
+    default="01:00:00",
+    help="Walltime for Slurm worker jobs (default: 01:00:00).",
 )
 @click.option(
     "--input-file",
@@ -142,7 +173,37 @@ def postprocess(run_dir, base_zoom, scheduler, clean_intermediate, cogs, config_
     "--scheduler",
     type=str,
     default=None,
-    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local cluster.",
+    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local or Slurm cluster.",
+)
+@click.option(
+    "--cluster-type",
+    type=click.Choice(["local", "slurm"]),
+    default="local",
+    help="Dask cluster type when --scheduler is not set (default: local).",
+)
+@click.option(
+    "--n-workers",
+    type=int,
+    default=4,
+    help="Number of Slurm worker jobs when --cluster-type=slurm (default: 4).",
+)
+@click.option(
+    "--cores-per-worker",
+    type=int,
+    default=16,
+    help="Cores per Slurm worker job (default: 16).",
+)
+@click.option(
+    "--memory-per-worker",
+    type=str,
+    default="28GB",
+    help="Memory per Slurm worker job (default: 28GB).",
+)
+@click.option(
+    "--walltime",
+    type=str,
+    default="01:00:00",
+    help="Walltime for Slurm worker jobs (default: 01:00:00).",
 )
 @click.option(
     "--spatial-index/--no-spatial-index",
@@ -297,7 +358,37 @@ def convert_csv(input_file, output_file, scheduler, bbox, start_time, end_time):
     "--scheduler",
     type=str,
     default=None,
-    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local cluster.",
+    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local or Slurm cluster.",
+)
+@click.option(
+    "--cluster-type",
+    type=click.Choice(["local", "slurm"]),
+    default="local",
+    help="Dask cluster type when --scheduler is not set (default: local).",
+)
+@click.option(
+    "--n-workers",
+    type=int,
+    default=4,
+    help="Number of Slurm worker jobs when --cluster-type=slurm (default: 4).",
+)
+@click.option(
+    "--cores-per-worker",
+    type=int,
+    default=16,
+    help="Cores per Slurm worker job (default: 16).",
+)
+@click.option(
+    "--memory-per-worker",
+    type=str,
+    default="28GB",
+    help="Memory per Slurm worker job (default: 28GB).",
+)
+@click.option(
+    "--walltime",
+    type=str,
+    default="01:00:00",
+    help="Walltime for Slurm worker jobs (default: 01:00:00).",
 )
 def analyze_passage(passage_file, ais_dir, output_file, max_time_gap, scheduler):
     """
@@ -991,6 +1082,329 @@ cli.add_command(convert)
 cli.add_command(events)
 # Register fairway commands
 cli.add_command(fairway)
+
+
+@click.group()
+def behavior():
+    """
+    Behavioral window extraction, UMAP clustering, and anomaly detection commands.
+    """
+    pass
+
+
+@behavior.command(name="extract-windows")
+@click.argument(
+    "input-file",
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "--output-file",
+    "-o",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Output Parquet file for extracted behavioral window features.",
+)
+@click.option(
+    "--scheduler",
+    type=str,
+    default=None,
+    help="Address of the Dask scheduler (e.g., tcp://127.0.0.1:8786). If None, starts a local or Slurm cluster.",
+)
+@click.option(
+    "--cluster-type",
+    type=click.Choice(["local", "slurm"]),
+    default="local",
+    help="Dask cluster type when --scheduler is not set (default: local).",
+)
+@click.option(
+    "--n-workers",
+    type=int,
+    default=4,
+    help="Number of Slurm worker jobs when --cluster-type=slurm (default: 4).",
+)
+@click.option(
+    "--cores-per-worker",
+    type=int,
+    default=16,
+    help="Cores per Slurm worker job (default: 16).",
+)
+@click.option(
+    "--memory-per-worker",
+    type=str,
+    default="28GB",
+    help="Memory per Slurm worker job (default: 28GB).",
+)
+@click.option(
+    "--walltime",
+    type=str,
+    default="01:00:00",
+    help="Walltime for Slurm worker jobs (default: 01:00:00).",
+)
+@click.option(
+    "--polygons-file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Optional path to anchorage areas GeoJSON/GeoPackage.",
+)
+@click.option(
+    "--window",
+    type=str,
+    default="10min",
+    help="Time window for behavioral aggregation (default: 10min).",
+)
+@click.option(
+    "--min-pings",
+    type=int,
+    default=5,
+    help="Minimum pings per window (default: 5).",
+)
+@click.option(
+    "--vessel-id-col",
+    type=str,
+    default="mmsi_hash",
+    help="Vessel identifier column name (default: mmsi_hash).",
+)
+@click.option(
+    "--time-col",
+    type=str,
+    default="timestamp_recv",
+    help="Timestamp column name (default: timestamp_recv).",
+)
+def behavior_extract_windows(
+    input_file,
+    output_file,
+    scheduler,
+    cluster_type,
+    n_workers,
+    cores_per_worker,
+    memory_per_worker,
+    walltime,
+    polygons_file,
+    window,
+    min_pings,
+    vessel_id_col,
+    time_col,
+):
+    """
+    Extract 10-minute behavioral window features from trajectorized AIS Parquet.
+    """
+    run_extract_windows(
+        input_file=input_file,
+        output_file=output_file,
+        scheduler=scheduler,
+        cluster_type=cluster_type,
+        n_workers=n_workers,
+        cores_per_worker=cores_per_worker,
+        memory_per_worker=memory_per_worker,
+        walltime=walltime,
+        polygons_file=polygons_file,
+        window=window,
+        min_pings=min_pings,
+        vessel_id_col=vessel_id_col,
+        time_col=time_col,
+    )
+
+
+@behavior.command(name="compute-knn")
+@click.argument(
+    "windows-file",
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "--output-file",
+    "-o",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Output .npz file for precomputed KNN indices and distances.",
+)
+@click.option(
+    "--n-neighbors",
+    type=int,
+    default=50,
+    help="Number of nearest neighbors to precompute (default: 50).",
+)
+@click.option(
+    "--compatibility-layout/--no-compatibility-layout",
+    default=False,
+    help="Use legacy UMAP 0.5.x KNN backend (default: False).",
+)
+def behavior_compute_knn(windows_file, output_file, n_neighbors, compatibility_layout):
+    """
+    Precompute and store the k-nearest-neighbor graph for UMAP.
+    """
+    compute_and_save_knn(
+        windows_file=windows_file,
+        output_file=output_file,
+        n_neighbors=n_neighbors,
+        compatibility_layout=compatibility_layout,
+    )
+
+
+@behavior.command(name="umap")
+@click.argument(
+    "windows-file",
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "--output-dir",
+    "-o",
+    type=click.Path(path_type=Path),
+    default=Path("output/umap"),
+    help="Directory to save output GeoParquet and dashboard figure.",
+)
+@click.option(
+    "--polygons-file",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Optional path to anchorage areas GeoJSON/GeoPackage for map plotting.",
+)
+@click.option(
+    "--cluster-method",
+    type=click.Choice(["hdbscan", "agglomerative"]),
+    default="hdbscan",
+    help="Hierarchical clustering method (default: hdbscan).",
+)
+@click.option(
+    "--n-clusters",
+    type=int,
+    default=8,
+    help="Number of clusters for agglomerative clustering (default: 8).",
+)
+@click.option(
+    "--contamination",
+    type=float,
+    default=0.015,
+    help="Contamination fraction for LOF and IsolationForest (default: 0.015).",
+)
+@click.option(
+    "--fit-sample-size",
+    type=int,
+    default=100_000,
+    help="Subsample size for fitting UMAP/clustering/LOF/IsolationForest before batched transform (default: 100000).",
+)
+@click.option(
+    "--compatibility-layout/--no-compatibility-layout",
+    default=False,
+    help="Use legacy UMAP 0.5.x layout pipeline instead of UMAP 0.6+ recursive/Adam pipeline (default: False).",
+)
+@click.option(
+    "--knn-file",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Optional precomputed KNN .npz file from `behavior compute-knn`.",
+)
+@click.option(
+    "--save-model",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Optional path to save fitted UMAP/clustering/anomaly model (.joblib) for transforming other months.",
+)
+@click.option(
+    "--model-file",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Optional path to a saved .joblib model to transform windows without re-fitting.",
+)
+@click.option(
+    "--no-plot",
+    is_flag=True,
+    default=False,
+    help="Skip generating the 4-panel PNG dashboard.",
+)
+def behavior_umap(
+    windows_file,
+    output_dir,
+    polygons_file,
+    cluster_method,
+    n_clusters,
+    contamination,
+    fit_sample_size,
+    compatibility_layout,
+    knn_file,
+    save_model,
+    model_file,
+    no_plot,
+):
+    """
+    Run UMAP behavioral clustering and anomaly detection on extracted windows.
+    """
+    run_umap_behavior(
+        windows_file=windows_file,
+        output_dir=output_dir,
+        polygons_file=polygons_file,
+        cluster_method=cluster_method,
+        n_clusters=n_clusters,
+        contamination=contamination,
+        fit_sample_size=fit_sample_size,
+        compatibility_layout=compatibility_layout,
+        knn_file=knn_file,
+        save_model=save_model,
+        model_file=model_file,
+        plot=not no_plot,
+    )
+
+
+@behavior.command(name="align")
+@click.argument(
+    "windows-files",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "--output-dir",
+    "-o",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Directory to save aligned per-slice GeoParquet embeddings.",
+)
+@click.option(
+    "--vessel-id-col",
+    type=str,
+    default="mmsi_hash",
+    help="Vessel identifier column used to link slices across time (default: mmsi_hash).",
+)
+@click.option(
+    "--sample-per-slice",
+    type=int,
+    default=50_000,
+    help="Maximum windows sampled per time slice (default: 50000).",
+)
+@click.option(
+    "--alignment-regularisation",
+    type=float,
+    default=0.01,
+    help="AlignedUMAP regularization strength across adjacent time slices (default: 0.01).",
+)
+@click.option(
+    "--alignment-window-size",
+    type=int,
+    default=3,
+    help="AlignedUMAP temporal alignment window size (default: 3).",
+)
+def behavior_align(
+    windows_files,
+    output_dir,
+    vessel_id_col,
+    sample_per_slice,
+    alignment_regularisation,
+    alignment_window_size,
+):
+    """
+    Jointly embed time-ordered behavioral window slices using AlignedUMAP.
+    """
+    run_aligned_umap(
+        windows_files=list(windows_files),
+        output_dir=output_dir,
+        vessel_id_col=vessel_id_col,
+        sample_per_slice=sample_per_slice,
+        alignment_regularisation=alignment_regularisation,
+        alignment_window_size=alignment_window_size,
+    )
+
+
+# Register behavior commands
+cli.add_command(behavior)
 
 
 if __name__ == "__main__":
